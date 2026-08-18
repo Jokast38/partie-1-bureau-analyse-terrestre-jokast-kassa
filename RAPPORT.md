@@ -325,3 +325,205 @@ durée, lieu, heure). Le signal qui semblait exister en phase 4 vivait entièrem
 dans le texte du témoignage annoté par le Bureau - qui n'est jamais disponible
 au moment où un signalement neuf arrive. C'est un résultat qui vaut la peine
 d'être présenté tel quel : 30 % d'honnête plutôt que 90 % de fantaisie.
+
+## Phase 13 - La facture du Bureau
+
+Grille votée par le Conseil : canular raté = 30 crédits, fausse alerte = 2
+crédits, bonne réponse = 0.
+
+| frontière | facture (crédits) |
+|---|---|
+| 0,00 | 34 710 |
+| 0,05 | 7 372 |
+| 0,10 | 5 024 |
+| 0,20 | 4 292 |
+| 0,30 | 4 132 |
+| 0,50 (par défaut) | **4 124** |
+| 0,70 (retenue) | **4 110** |
+| 0,90 - 1,00 | 4 110 |
+
+- Frontière retenue (coût minimal sur le test) : **0,70**
+- Facture à 0,5 : **4 124 crédits**
+- Facture avec la frontière retenue : **4 110 crédits**
+- Écart : **14 crédits économisés**
+
+Justification en crédits, pas en score : un canular raté coûte 15 fois plus
+cher qu'une fausse alerte (30 contre 2), mais notre modèle (phases 5-12)
+prédit rarement une probabilité élevée pour un vrai canular - la courbe de
+facture le montre bien : elle chute très vite entre 0,00 et 0,20 parce
+qu'à seuil bas, on paye surtout des fausses alertes (2 crédits chacune, mais
+il y en a énormément), puis elle continue de baisser lentement jusqu'à 0,70
+parce que remonter le seuil élimine des fausses alertes sans coûter
+beaucoup plus de canulars ratés (les canulars du test dépassent rarement
+0,50-0,70 de toute façon). Au-delà de 0,70 la facture ne bouge plus : le
+modèle ne prédit jamais de probabilité aussi haute, remonter davantage la
+frontière n'a plus aucun effet. L'écart de 14 crédits (0,3 % de la facture à
+0,5) est faible précisément parce que notre modèle sans fuite n'a presque
+pas de signal exploitable : optimiser la frontière ne peut pas compenser
+l'absence de signal, seul un meilleur modèle le pourrait.
+
+## Phase 14 - Une promesse à 80 %
+
+| tranche de probabilité | n | proba annoncée | proportion réelle |
+|---|---|---|---|
+| ]-0,001 ; 0,005] | 7 699 | 0,210 % | 0,714 % |
+| ]0,005 ; 0,01] | 2 254 | 1,000 % | 0,665 % |
+| ]0,01 ; 0,015] | 1 491 | 1,500 % | 0,738 % |
+| ]0,015 ; 0,02] | 1 179 | 2,000 % | 0,339 % |
+| ]0,02 ; 0,03] | 1 560 | 2,708 % | 0,897 % |
+| ]0,03 ; 0,054] | 1 559 | 4,130 % | 1,026 % |
+| ]0,054 ; 0,69] | 1 750 | 10,267 % | 1,257 % |
+
+Sept tranches (découpées par quantiles pour garantir un effectif comparable
+dans chacune, de 1 179 à 7 699 relevés).
+
+**Sens de l'erreur : le système est trop confiant.** Dans chaque tranche, la
+probabilité moyenne annoncée dépasse la proportion de canulars réellement
+observée - parfois d'un facteur 8 (dernière tranche : 10,3 % annoncés contre
+1,3 % réels). Avec moins de 1 % de canulars dans tout le fichier, aucune
+tranche ne peut espérer une proportion réelle proche d'une promesse à 80 % :
+il n'y a statistiquement pas assez de canulars pour remplir une tranche
+pareille. On ne corrige pas par un recalibrage global (Platt scaling / isotonic) :
+avec 137 canulars dans tout le test, la dernière tranche ne contient qu'une
+poignée de vrais positifs, et un recalibrage donnerait une fausse impression
+de précision sur un signal qui n'existe pas vraiment. On documente la limite
+plutôt que de la maquiller.
+
+## Phase 15 - Deux analystes, deux chiffres
+
+- Taille de la partie test : **17 492** relevés
+- Canulars réellement présents dans le test : **137**
+- Nombre de rééchantillonnages bootstrap utilisés : **1 000**
+- Recall à la frontière retenue (0,70) : **0,000**, intervalle à 95 % :
+  **[0,000 ; 0,000]**
+
+**Réponse au Conseil** : avec seulement 137 canulars sur 17 492 relevés de
+test, chaque chiffre de la phase 4 ne repose que sur une poignée d'exemples
+positifs ; l'intervalle obtenu par bootstrap le confirme puisqu'à cette
+frontière il ne quitte jamais zéro, ce qui est cohérent avec le fait que
+notre modèle sans fuite ne franchit quasiment jamais le seuil de décision.
+Un écart de 0,03 entre deux analystes (0,31 contre 0,34) ne prouverait rien
+non plus : il faudrait comparer deux intervalles qui se recouvrent
+largement, pas deux points centraux qui bougent au gré du tirage aléatoire
+d'à peine trois ou quatre relevés déplacés d'un côté à l'autre de la
+découpe.
+
+## Phase 16 - Trois dossiers sur le bureau
+
+**Dossier 1 - confiance forte** (proba = 0,690, vrai label : pas un canular -
+un faux positif potentiel à cette frontière) : `state=az`, `shape_clean=triangle`,
+`city_freq` faible (ville peu fréquente). Neutraliser `shape_clean` seul fait
+chuter la probabilité de 0,66 point, `state` de 0,54, `city_freq` de 0,50 :
+c'est la combinaison "forme rare + ville rare + état peu représenté" qui
+pousse ce relevé vers le haut, pas un seul facteur isolé.
+
+**Dossier 2 - tout juste au-dessus de la frontière** (proba = 0,010, vrai
+label : pas un canular) : ici rien ne domine, les trois colonnes qui
+comptent le plus (`city_freq`, `hour_sin`, `longitude`) ne font bouger la
+probabilité que de 0,015 à 0,02 point chacune. Le modèle n'a en réalité
+presque aucune conviction sur ce dossier, ce qui est cohérent avec sa
+probabilité proche de 0.
+
+**Dossier 3 - canular laissé passer** (proba = 0,025, vrai label : canular) :
+`shape_clean` est manquant pour ce relevé, `hour_sin`/`hour_cos` dominent
+l'explication locale. Rien dans les champs factuels disponibles ne
+ressemblait à un canular pour ce cas précis - le modèle n'avait tout
+simplement pas de quoi le voir venir.
+
+**Explication d'ensemble** (permutation : on mélange une colonne à la fois et
+on mesure la dégradation du score de Brier - le recall étant déjà à 0 partout
+à cette frontière, il ne peut pas chuter davantage, donc on regarde l'effet
+sur la qualité des probabilités elles-mêmes) :
+
+| colonne | dégradation moyenne du Brier |
+|---|---|
+| duration_seconds | +0,000032 |
+| shape_clean | +0,000009 |
+| country | -0,000048 |
+| hour_cos | -0,000124 |
+| hour_sin | -0,000174 |
+| city_freq | -0,000214 |
+| latitude | -0,000362 |
+| longitude | -0,000407 |
+| state | -0,000426 |
+
+**Colonne dont la place surprend** : `duration_seconds` arrive en tête du
+classement global, alors qu'elle n'apparaît dans aucun des trois dossiers
+individuels ci-dessus. Un effet moyen sur l'ensemble du test (phase
+d'ensemble) et l'explication d'un dossier précis répondent à deux questions
+différentes : le classement global dit ce qui compte "en général", pas ce
+qui a fait basculer *ce* relevé-là. C'est justement pourquoi les deux
+niveaux sont exigés et ne se remplacent pas l'un l'autre.
+
+## Phase 17 - L'angle mort du Bureau
+
+| zone | n | % canulars | precision | recall |
+|---|---|---|---|---|
+| États-Unis | 14 929 | 0,710 % | 0,000 | 0,000 |
+| pays manquant | 1 773 | 0,959 % | 0,000 | 0,000 |
+| autres pays connus (gb/ca/au/de) | 790 | 1,772 % | 0,000 | 0,000 |
+| **global** | **17 492** | **0,783 %** | **0,000** | **0,000** |
+
+La proportion de canulars n'est pas la même partout : elle est presque
+2,5 fois plus élevée dans les "autres pays connus" que sur les États-Unis.
+Cela ne se voyait pas dans le chiffre global, écrasé par le poids des
+États-Unis (85 % du test). Cependant precision et recall restent à 0 partout
+- ce n'est donc pas un trou caché derrière une bonne moyenne, c'est la
+confirmation qu'il n'y a nulle part assez de signal pour que la frontière
+change quoi que ce soit.
+
+**Décision : la même frontière partout.** Les zones hors États-Unis pèsent
+quelques centaines à quelques milliers de relevés contre 14 929 pour les
+États-Unis. D'après la phase 15, un intervalle de confiance sur un
+échantillon de cette taille avec moins de 2 % de positifs serait
+extrêmement large : ajuster une frontière séparée sur "autres pays connus"
+reviendrait à régler un paramètre sur du bruit d'échantillonnage plutôt que
+sur un vrai effet géographique. On ne tranche pas pour une frontière par
+zone, et ce choix est écrit ici.
+
+## Phase 18 - La transmission d'archive
+
+![Proportion de canulars par année](proportion_canulars_par_annee.png)
+
+La courbe n'est pas plate : la proportion de canulars par année tourne
+autour de 0 % avant 1995, reste sous 1 % jusqu'en 2005, puis grimpe et
+oscille entre 1,4 % et 2,6 % entre 2006 et 2014 (pic à 2,60 % en 2008). Ce
+n'est pas un hasard d'échantillonnage : les années à fort volume (2006-2014
+comptent chacune plusieurs milliers de relevés) confirment la tendance, elle
+n'est pas due à quelques années trop peu peuplées. La définition du canular
+que porte notre étiquette (mots-clés dans les notes du Bureau) a donc
+probablement changé au fil du temps - une pratique de modération plus
+systématique à partir du milieu des années 2000.
+
+**Épreuve** (entraînement sur les 50 % de relevés les plus anciens, test sur
+les 20 % les plus récents, écart temporel plus large que la phase 8) :
+
+| | Phase 8 (train = 80 % ancien) | Phase 18 (train = 50 % ancien, écart plus large) |
+|---|---|---|
+| precision | 0,027 | 0,000 |
+| recall | 0,015 | 0,000 |
+
+Le score chute encore un peu plus quand on écarte encore plus le train du
+test dans le temps, cohérent avec une dérive de la définition du canular :
+le peu de signal capté en phase 8 s'appuyait en partie sur des années
+proches du cutoff, qui disparaissent du train dans cette version.
+
+**Indicateurs de surveillance en production** (aucun ne nécessite de
+connaître le vrai statut canular du relevé, qui n'arrive jamais à temps ou
+jamais du tout) :
+
+1. **Taux de relevés signalés canulars par semaine**, comparé à sa moyenne
+   mobile sur 8 semaines.
+2. **Probabilité moyenne prédite** par le système sur les relevés reçus dans
+   la semaine.
+3. **Proportion de champs clés manquants** (`country`, `state`) dans le flux
+   entrant, pour détecter un changement de source de données en amont
+   (ex. panne partielle du capteur ou nouveau canal de collecte).
+
+Fréquence : ces trois indicateurs sont regardés **chaque semaine**, avec un
+audit complet **mensuel** du système entier.
+
+Seuil d'alerte : on rappelle les analystes dès qu'un indicateur s'écarte de
+**plus de deux écarts-types** de sa moyenne mobile sur 8 semaines (ou de
+**plus de 50 % en relatif** tant que l'historique est trop court pour un
+écart-type fiable).

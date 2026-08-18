@@ -6,13 +6,14 @@ les canulars des signalements réels.
 ## Lancer l'analyse
 
 ```bash
-pip install pandas numpy scikit-learn
+pip install pandas numpy scikit-learn matplotlib
 python analyse.py
 ```
 
 Le script télécharge `releves_klaxo3.csv` s'il est absent, puis rejoue tout le
-traitement d'une traite (nettoyage, features, modèles). Le fichier de données
-n'est pas versionné dans ce dépôt (15 Mo, téléchargeable).
+traitement d'une traite (nettoyage, features, modèles, décision, graphique).
+Le fichier de données n'est pas versionné dans ce dépôt (15 Mo, téléchargeable).
+Il régénère aussi `proportion_canulars_par_annee.png`, utilisé dans le rapport.
 
 Voir [RAPPORT.md](RAPPORT.md) pour le détail phase par phase et les chiffres
 demandés par le Conseil.
